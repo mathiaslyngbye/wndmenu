@@ -28,7 +28,7 @@ This project supports building from source on Windows using **CMake** and **Visu
     nmake
     ```
 
-5. The resulting executable (`wndwalk.exe`) will be located in the `build/` directory.
+5. The resulting executable (`wndmenu.exe`) will be located in the `build/` directory.
 
 ### Troubleshooting
 
