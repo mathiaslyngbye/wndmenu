@@ -5,7 +5,6 @@
 #include <iostream>
 #include <unordered_map>
 #include <vector>
-#include <string_view>
 
 struct ScanEntry {
     std::string name;
@@ -59,13 +58,10 @@ ScanResult scan(const Target& target)
             // Add files to results
             if (entry.is_regular_file()) 
             {
-                // Assert extension
+                // Find extension
                 std::string extension = entry.path().extension().string();
-                if (!target.extensions.empty())
-                {
-                    if (std::find(target.extensions.begin(), target.extensions.end(), extension) == target.extensions.end())
-                        continue;
-                }
+                if (std::find(target.extensions.begin(), target.extensions.end(), extension) == target.extensions.end())
+                    continue;
 
                 // Add source if new exist
                 std::string source  = entry.path().parent_path().string();
@@ -109,11 +105,15 @@ ScanResult scan(const std::vector<Target>& targets)
                 result.directories.emplace_back(directory);
         }
 
+        // Reserve more memory as needed
+        const size_t needed = result.entries.size() + part.entries.size();
+        if (needed > result.entries.capacity())
+            result.entries.reserve(needed);
+        
         // Merge entries with remapped directory indices
-        result.entries.reserve(result.entries.size() + part.entries.size());
         for (const ScanEntry &entry : part.entries)
         {
-            uint32_t remapped = map[part.directories[entry.index]];
+            uint32_t remapped = map[part.directories[entry.index]]; // or use find()
             result.entries.emplace_back(ScanEntry{entry.name, remapped});
         }
     }
@@ -160,7 +160,7 @@ std::vector<const ScanEntry*> search(const std::vector<ScanEntry>& entries, cons
     );
 
     // Collect up to cap matches
-    for (auto iterator = begin; iterator != entries.end(); iterator++)
+    for (auto iterator = begin; iterator != entries.end(); ++iterator)
     {
         if (iterator->name.size() < prefix.size())
             break;

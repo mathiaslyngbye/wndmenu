@@ -3,7 +3,7 @@
 
 #include "target.hpp"
 
-std::vector<Target> targets = {
+inline const std::vector<Target> targets = {
     /* Path                         depth       extensions*/
     {"C:\\Program Files",           1,          {".exe"}},
     {"C:\\Program Files (x86)",     1,          {".exe"}}
