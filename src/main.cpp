@@ -10,10 +10,15 @@ int main()
 {
     auto start = std::chrono::high_resolution_clock::now();
     ScanResult result = scan(targets);
-    sort(result.entries);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     std::cout << "Scan time: " << duration << " ms\n";
+    
+    start = std::chrono::high_resolution_clock::now();
+    sort(result.entries);
+    end = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    std::cout << "Sort time: " << duration << " ms\n";
 
     // Interactive demo
     std::string input;
