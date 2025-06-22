@@ -1,19 +1,26 @@
 #include <iostream>
 #include <conio.h> // getch
+#include <chrono>
+
 
 #include "config.hpp"
 #include "scan.hpp"
 
 int main()
 {
+    auto start = std::chrono::high_resolution_clock::now();
     ScanResult result = scan(targets);
     sort(result.entries);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    std::cout << "Scan time: " << duration << " ms\n";
 
     // Interactive demo
     std::string input;
     char character;
 
-    while (true) {
+    while (true)
+    {
         std::cout << "\r> " << input << "" << std::flush;
         character = getch();
 

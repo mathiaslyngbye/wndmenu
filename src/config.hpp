@@ -5,8 +5,8 @@
 
 std::vector<Target> targets = {
     /* Path                         depth       extensions*/
-    {"C:\\Program Files",           2,          {".exe"}},
-   // {"C:\\Program Files (x86)",     2,          {".exe"}}
+    {"C:\\Program Files",           1,          {".exe"}},
+    {"C:\\Program Files (x86)",     1,          {".exe"}}
 };
 
 #endif
