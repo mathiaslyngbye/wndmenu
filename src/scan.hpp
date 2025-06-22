@@ -5,18 +5,21 @@
 #include <iostream>
 #include <unordered_map>
 #include <vector>
+#include <future>
 
-struct ScanEntry {
+struct ScanEntry
+{
     std::string name;
     uint32_t index;
 };
 
-struct ScanResult {
+struct ScanResult
+{
     std::vector<std::string> directories;
     std::vector<ScanEntry> entries;
 };
 
-ScanResult scan(const Target& target)
+ScanResult scanTarget(const Target& target)
 {
     // Initialize and reserve
     std::error_code error;
@@ -82,8 +85,14 @@ ScanResult scan(const Target& target)
     return result;
 }
 
-ScanResult scan(const std::vector<Target>& targets)
+ScanResult scanTargets(const std::vector<Target>& targets)
 {
+    // Add scan calls to futures
+    std::vector<std::future<ScanResult>> futures;
+    futures.reserve(targets.size());
+    for (const Target& target : targets)
+        futures.push_back(std::async(std::launch::async, scanTarget, std::ref(target)));
+
     // Initialize and reserve
     ScanResult result;
     result.entries.reserve(4096);
@@ -92,10 +101,10 @@ ScanResult scan(const std::vector<Target>& targets)
     std::unordered_map<std::string, uint32_t> map;
     map.reserve(256);
 
-    for (const Target &target : targets)
+    for (std::future<ScanResult> &future : futures)
     {
         // Get partial result
-        ScanResult part = scan(target);
+        ScanResult part = future.get();
 
         // Merge directories
         for (const std::string &directory : part.directories)

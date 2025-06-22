@@ -9,7 +9,7 @@
 int main()
 {
     auto start = std::chrono::high_resolution_clock::now();
-    ScanResult result = scan(targets);
+    ScanResult result = scanTargets(targets);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     std::cout << "Scan time: " << duration << " ms\n";
