@@ -1,5 +1,9 @@
 <!-- Title -->
 
+<p align="left">
+  <img src="docs/wndmenu.png" width="160" alt="wndwalk">
+</p>
+
 wndmenu provides improved application launching on MS Windows.
 
 ## Configuration
