@@ -99,6 +99,7 @@ private:
     void messageLoop()
     {
         MSG msg;
+        updateSuggestions();
         while (GetMessage(&msg, nullptr, 0, 0))
         {
             TranslateMessage(&msg);
