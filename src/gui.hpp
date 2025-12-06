@@ -7,17 +7,14 @@
 using SuggestionProvider = std::function<std::vector<std::wstring>(const std::wstring&)>;
 using SelectionHandler   = std::function<void(const std::wstring&)>;
 
-class PrefixMenuBar {
+class PrefixMenuBar
+{
 public:
     PrefixMenuBar(SuggestionProvider provider,
                   SelectionHandler selector,
-                  int height = 30,
-                  int maxSuggestions = 5)
+                  int lines = 5)
         : provider(provider),
           onSelect(selector),
-          barHeight(height),
-          lineHeight(height),
-          maxSuggestions(maxSuggestions),
           hInstance(GetModuleHandle(nullptr)) 
     {}
 
@@ -39,9 +36,8 @@ public:
 private:
     SuggestionProvider provider;
     SelectionHandler onSelect;
-    int barHeight;
-    int maxSuggestions;
-    int lineHeight = 20;
+    int lines = 10;
+    int lineHeight = 19;
     HWND hwnd;
     HINSTANCE hInstance;
     std::wstring input;
@@ -76,7 +72,7 @@ private:
     void createWindow() 
     {
         int width = 500;
-        int height = barHeight + maxSuggestions * lineHeight;
+        int height = lineHeight + (lines * lineHeight);
         int x = (GetSystemMetrics(SM_CXSCREEN)/2)-(width/2);
         int y = (GetSystemMetrics(SM_CYSCREEN)/2)-(height/2);
 
@@ -109,8 +105,8 @@ private:
     void updateSuggestions()
     {
         suggestions = provider(input);
-        if (suggestions.size() > maxSuggestions)
-            suggestions.resize(maxSuggestions);
+        if (suggestions.size() > lines)
+            suggestions.resize(lines);
         selectedIndex = 0;
         InvalidateRect(hwnd, nullptr, TRUE);
     }
@@ -124,12 +120,12 @@ private:
         FillRect(hdc, &rect, (HBRUSH)(COLOR_WINDOW + 1));
 
         SetBkMode(hdc, TRANSPARENT);
-        RECT inputRect = {0, 0, rect.right, barHeight};
+        RECT inputRect = {0, 0, rect.right, lineHeight};
         DrawTextW(hdc, input.c_str(), -1, &inputRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
         for (size_t i = 0; i < suggestions.size(); ++i)
         {
-            RECT line = {0, barHeight + int(i * lineHeight), rect.right, barHeight + int((i+1) * lineHeight)};
+            RECT line = {0, lineHeight + int(i * lineHeight), rect.right, lineHeight + int((i+1) * lineHeight)};
             if ((int)i == selectedIndex)
             {
                 HBRUSH highlight = CreateSolidBrush(RGB(200, 200, 255));
