@@ -1,56 +1,30 @@
-#include <iostream>
-#include <conio.h> // getch
-#include <chrono>
+#include <vector>
+#include <string>
 
-
+#include "gui.hpp"
 #include "config.hpp"
 #include "scan.hpp"
 
-int main()
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR, int)
 {
-    auto start = std::chrono::high_resolution_clock::now();
     ScanResult result = scanTargets(targets);
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    std::cout << "Scan time: " << duration << " ms\n";
-    
-    start = std::chrono::high_resolution_clock::now();
     sort(result.entries);
-    end = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    std::cout << "Sort time: " << duration << " ms\n";
+    
+    auto search = [&](const std::wstring& prefix) {
+        std::vector<std::wstring> out;
+        out.push_back(L"TestA");
+        out.push_back(L"TestB");
+        out.push_back(L"TestC");
+        out.push_back(L"TestD");
+        return out;
+    };
 
-    // Interactive demo
-    std::string input;
-    char character;
+    auto launch = [&](const std::wstring& choice) {
+        return;
+    };
 
-    while (true)
-    {
-        std::cout << "\r> " << input << "" << std::flush;
-        character = getch();
-
-        // Handle backspace or ENTER
-        if (character == '\n')
-            continue;
-        else if (character == '\b' || character == 127)
-        {
-            if (!input.empty())
-                input.pop_back();
-        }
-        else if (character == 27)
-            break;
-        else
-            input += std::tolower(static_cast<unsigned char>(character));
-
-        // Search and show matches
-        auto matches = search(result.entries, input, 10);
-
-        std::cout << "\nMatches for \"" << input << "\":\n";
-        for (const ScanEntry* entry : matches)
-        {
-            std::cout << result.directories[entry->index] << "\\" << entry->name << "\n";
-        }
-    }
+    PrefixMenuBar bar(search, launch);
+    bar.run();
 
     return 0;
 }
