@@ -18,15 +18,18 @@ public:
           barHeight(height),
           lineHeight(height),
           maxSuggestions(maxSuggestions),
-          hInstance(GetModuleHandle(nullptr)) {}
+          hInstance(GetModuleHandle(nullptr)) 
+    {}
 
-    void run() {
+    void run()
+    {
         registerClass();
         createWindow();
         messageLoop();
     }
 
-    void runAsync() {
+    void runAsync()
+    {
         CreateThread(nullptr, 0, [](LPVOID param) -> DWORD {
             static_cast<PrefixMenuBar*>(param)->run();
             return 0;
@@ -45,18 +48,22 @@ private:
     std::vector<std::wstring> _suggestions;
     int _selectedIndex = 0;
 
-    static LRESULT CALLBACK StaticWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
+    static LRESULT CALLBACK StaticWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+    {
         PrefixMenuBar* self = nullptr;
-        if (msg == WM_NCCREATE) {
+        if (msg == WM_NCCREATE)
+        {
             self = static_cast<PrefixMenuBar*>(reinterpret_cast<CREATESTRUCT*>(lp)->lpCreateParams);
             SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(self));
-        } else {
-            self = reinterpret_cast<PrefixMenuBar*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
         }
+        else
+            self = reinterpret_cast<PrefixMenuBar*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+        
         return self ? self->WndProc(hwnd, msg, wp, lp) : DefWindowProc(hwnd, msg, wp, lp);
     }
 
-    void registerClass() {
+    void registerClass()
+    {
         WNDCLASS wc = {};
         wc.lpfnWndProc = StaticWndProc;
         wc.hInstance = hInstance;
@@ -89,7 +96,8 @@ private:
         SetFocus(_hwnd);
     }
 
-    void messageLoop() {
+    void messageLoop()
+    {
         MSG msg;
         while (GetMessage(&msg, nullptr, 0, 0))
         {
@@ -119,9 +127,11 @@ private:
         RECT inputRect = {0, 0, rect.right, barHeight};
         DrawTextW(hdc, _input.c_str(), -1, &inputRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
-        for (size_t i = 0; i < _suggestions.size(); ++i) {
+        for (size_t i = 0; i < _suggestions.size(); ++i)
+        {
             RECT line = {0, barHeight + int(i * lineHeight), rect.right, barHeight + int((i+1) * lineHeight)};
-            if ((int)i == _selectedIndex) {
+            if ((int)i == _selectedIndex)
+            {
                 HBRUSH highlight = CreateSolidBrush(RGB(200, 200, 255));
                 FillRect(hdc, &line, highlight);
                 DeleteObject(highlight);
