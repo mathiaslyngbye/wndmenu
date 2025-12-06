@@ -7,10 +7,10 @@
 #include "target.hpp"
 
 inline const std::array<std::array<std::string, 2>, 3> colors =  {{
-    /* fg        bg        */
-    { "#bbbbbb", "#222222" },
-    { "#eeeeee", "#005577" },
-    { "#000000", "#00ffff" }
+    /* fg             bg */
+    { "#bbbbbb",    "#222222" },   /* Normal */
+    { "#eeeeee",    "#005577" },   /* Selected */
+    { "#000000",    "#00ffff" }    /* Out */
 }};
 
 // Sources
