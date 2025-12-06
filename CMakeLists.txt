@@ -15,4 +15,4 @@ add_executable(wndmenu
 )
 
 # Optional GUI-only build
-# set_target_properties(wndmenu PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
+set_target_properties(wndmenu PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
