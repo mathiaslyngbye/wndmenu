@@ -42,11 +42,11 @@ private:
     int barHeight;
     int maxSuggestions;
     int lineHeight = 20;
-    HWND _hwnd;
+    HWND hwnd;
     HINSTANCE hInstance;
-    std::wstring _input;
-    std::vector<std::wstring> _suggestions;
-    int _selectedIndex = 0;
+    std::wstring input;
+    std::vector<std::wstring> suggestions;
+    int selectedIndex = 0;
 
     static LRESULT CALLBACK StaticWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     {
@@ -80,7 +80,7 @@ private:
         int x = (GetSystemMetrics(SM_CXSCREEN)/2)-(width/2);
         int y = (GetSystemMetrics(SM_CYSCREEN)/2)-(height/2);
 
-        _hwnd = CreateWindowEx(
+        hwnd = CreateWindowEx(
             WS_EX_TOPMOST | WS_EX_TOOLWINDOW,
             L"PrefixMenuBarClass",
             nullptr,
@@ -93,7 +93,7 @@ private:
             hInstance,
             this
         );
-        SetFocus(_hwnd);
+        SetFocus(hwnd);
     }
 
     void messageLoop()
@@ -108,37 +108,37 @@ private:
 
     void updateSuggestions()
     {
-        _suggestions = provider(_input);
-        if (_suggestions.size() > maxSuggestions)
-            _suggestions.resize(maxSuggestions);
-        _selectedIndex = 0;
-        InvalidateRect(_hwnd, nullptr, TRUE);
+        suggestions = provider(input);
+        if (suggestions.size() > maxSuggestions)
+            suggestions.resize(maxSuggestions);
+        selectedIndex = 0;
+        InvalidateRect(hwnd, nullptr, TRUE);
     }
 
     void draw()
     {
         PAINTSTRUCT ps;
-        HDC hdc = BeginPaint(_hwnd, &ps);
+        HDC hdc = BeginPaint(hwnd, &ps);
         RECT rect;
-        GetClientRect(_hwnd, &rect);
+        GetClientRect(hwnd, &rect);
         FillRect(hdc, &rect, (HBRUSH)(COLOR_WINDOW + 1));
 
         SetBkMode(hdc, TRANSPARENT);
         RECT inputRect = {0, 0, rect.right, barHeight};
-        DrawTextW(hdc, _input.c_str(), -1, &inputRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+        DrawTextW(hdc, input.c_str(), -1, &inputRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
-        for (size_t i = 0; i < _suggestions.size(); ++i)
+        for (size_t i = 0; i < suggestions.size(); ++i)
         {
             RECT line = {0, barHeight + int(i * lineHeight), rect.right, barHeight + int((i+1) * lineHeight)};
-            if ((int)i == _selectedIndex)
+            if ((int)i == selectedIndex)
             {
                 HBRUSH highlight = CreateSolidBrush(RGB(200, 200, 255));
                 FillRect(hdc, &line, highlight);
                 DeleteObject(highlight);
             }
-            DrawTextW(hdc, _suggestions[i].c_str(), -1, &line, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+            DrawTextW(hdc, suggestions[i].c_str(), -1, &line, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
         }
-        EndPaint(_hwnd, &ps);
+        EndPaint(hwnd, &ps);
     }
 
     LRESULT WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) 
@@ -151,14 +151,14 @@ private:
                 {
                     DestroyWindow(hwnd);
                 } 
-                else if (wp == VK_BACK && !_input.empty())
+                else if (wp == VK_BACK && !input.empty())
                 {
-                    _input.pop_back();
+                    input.pop_back();
                     updateSuggestions();
                 } 
                 else if (wp >= 32 && wp <= 126)
                 {
-                    _input.push_back(static_cast<wchar_t>(wp));
+                    input.push_back(static_cast<wchar_t>(wp));
                     updateSuggestions();
                 }
 
@@ -168,20 +168,20 @@ private:
             case WM_KEYDOWN:
                 if ((wp == VK_DOWN) || (wp == VK_TAB && !(GetKeyState(VK_SHIFT) & 0x8000)))
                 {
-                    _selectedIndex = (_selectedIndex + 1) % _suggestions.size();
+                    selectedIndex = (selectedIndex + 1) % suggestions.size();
                     InvalidateRect(hwnd, nullptr, TRUE);
                 } 
                 else if ((wp == VK_UP) || (wp == VK_TAB && (GetKeyState(VK_SHIFT) & 0x8000)))
                 {
-                    _selectedIndex = (_selectedIndex + _suggestions.size() - 1) % _suggestions.size();
+                    selectedIndex = (selectedIndex + suggestions.size() - 1) % suggestions.size();
                     InvalidateRect(hwnd, nullptr, TRUE);
                 } 
                 else if (wp == VK_RETURN)
                 {
-                    if (!_suggestions.empty())
-                        onSelect(_suggestions[_selectedIndex]);
+                    if (!suggestions.empty())
+                        onSelect(suggestions[selectedIndex]);
                     else
-                        onSelect(_input);
+                        onSelect(input);
                     DestroyWindow(hwnd);
                 }
                 return 0;
