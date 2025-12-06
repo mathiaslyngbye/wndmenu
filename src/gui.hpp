@@ -4,6 +4,8 @@
 #include <vector>
 #include <functional>
 
+#include "config.hpp"
+
 using SuggestionProvider = std::function<std::vector<std::wstring>(const std::wstring&)>;
 using SelectionHandler   = std::function<void(const std::wstring&)>;
 
@@ -34,10 +36,12 @@ public:
     }
 
 private:
+
     SuggestionProvider provider;
     SelectionHandler onSelect;
     int lines = 10;
     int lineHeight = 19;
+    int lineIndent = 6;
     HWND hwnd;
     HINSTANCE hInstance;
     std::wstring input;
@@ -113,27 +117,43 @@ private:
 
     void draw()
     {
+        // Initialize
         PAINTSTRUCT ps;
         HDC hdc = BeginPaint(hwnd, &ps);
-        RECT rect;
-        GetClientRect(hwnd, &rect);
-        FillRect(hdc, &rect, (HBRUSH)(COLOR_WINDOW + 1));
+        
+        // Draw background
+        RECT backgroundRect;
+        GetClientRect(hwnd, &backgroundRect);
+        HBRUSH backgroundBrush = CreateSolidBrush(colors[0][1]);
+        FillRect(hdc, &backgroundRect, backgroundBrush);
+        DeleteObject(backgroundBrush);
 
+        // Draw input text
         SetBkMode(hdc, TRANSPARENT);
-        RECT inputRect = {0, 0, rect.right, lineHeight};
+        RECT inputRect = {lineIndent, 0, backgroundRect.right, lineHeight};
+        SetTextColor(hdc, colors[0][0]);
         DrawTextW(hdc, input.c_str(), -1, &inputRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
-        for (size_t i = 0; i < suggestions.size(); ++i)
+        // Draw suggestions
+        for (size_t i = 0; i < suggestions.size(); i++)
         {
-            RECT line = {0, lineHeight + int(i * lineHeight), rect.right, lineHeight + int((i+1) * lineHeight)};
+            RECT lineRect = {0,             (lineHeight + int(i * lineHeight)), backgroundRect.right,   (lineHeight + int((i+1) * lineHeight))};
+            RECT textRect = {lineIndent,    (lineHeight + int(i * lineHeight)), backgroundRect.right,   (lineHeight + int((i+1) * lineHeight))};
+
+            // Draw extra rectangle on highlight
             if ((int)i == selectedIndex)
             {
-                HBRUSH highlight = CreateSolidBrush(RGB(200, 200, 255));
-                FillRect(hdc, &line, highlight);
-                DeleteObject(highlight);
+                HBRUSH lineBrush = CreateSolidBrush(colors[1][1]);
+                FillRect(hdc, &lineRect, lineBrush);
+                DeleteObject(lineBrush);
             }
-            DrawTextW(hdc, suggestions[i].c_str(), -1, &line, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+            
+            // Draw text regardless
+            SetTextColor(hdc, (i == selectedIndex) ? colors[1][0] : colors[0][0]);
+            DrawTextW(hdc, suggestions[i].c_str(), -1, &textRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
         }
+
+        // End
         EndPaint(hwnd, &ps);
     }
 
