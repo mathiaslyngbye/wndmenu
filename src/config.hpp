@@ -6,12 +6,15 @@
 
 #include "target.hpp"
 
-inline const std::array<std::array<std::string, 2>, 3> colors =  {{
-    /* fg             bg */
-    { "#bbbbbb",    "#222222" },   /* Normal */
-    { "#eeeeee",    "#005577" },   /* Selected */
-    { "#000000",    "#00ffff" }    /* Out */
+#include <windows.h>
+
+inline constexpr std::array<std::array<COLORREF, 2>, 3> colors = {{
+    /* fg                       bg */
+    { RGB(0xbb, 0xbb, 0xbb),    RGB(0x22, 0x22, 0x22) }, /* Normal */
+    { RGB(0xee, 0xee, 0xee),    RGB(0x00, 0x55, 0x77) }, /* Selected */
+    { RGB(0x00, 0x00, 0x00),    RGB(0x00, 0xff, 0xff) }, /* Out */
 }};
+
 
 // Sources
 inline const std::vector<Target> targets = {
