@@ -166,12 +166,12 @@ private:
 
             // List navigation
             case WM_KEYDOWN:
-                if ((wp == VK_DOWN) || (wp == VK_TAB && !(GetKeyState(VK_SHIFT) & 0x8000)))
+                if (wp == VK_DOWN)
                 {
                     selectedIndex = (selectedIndex + 1) % suggestions.size();
                     InvalidateRect(hwnd, nullptr, TRUE);
                 } 
-                else if ((wp == VK_UP) || (wp == VK_TAB && (GetKeyState(VK_SHIFT) & 0x8000)))
+                else if (wp == VK_UP)
                 {
                     selectedIndex = (selectedIndex + suggestions.size() - 1) % suggestions.size();
                     InvalidateRect(hwnd, nullptr, TRUE);
