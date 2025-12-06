@@ -2,12 +2,14 @@
 #include <windows.h>
 #include <string>
 #include <vector>
+#include <array>
 #include <functional>
 
 #include "config.hpp"
 
-using SuggestionProvider = std::function<std::vector<std::wstring>(const std::wstring&)>;
-using SelectionHandler   = std::function<void(const std::wstring&)>;
+using Suggestion         = std::array<std::wstring, 2>; // path, binary
+using SuggestionProvider = std::function<std::vector<Suggestion>(const std::wstring&)>;
+using SelectionHandler   = std::function<void(const Suggestion&)>;
 
 class PrefixMenuBar
 {
@@ -35,7 +37,7 @@ private:
     HWND hwnd;
     HINSTANCE hInstance;
     std::wstring input;
-    std::vector<std::wstring> suggestions;
+    std::vector<std::array<std::wstring, 2>> suggestions;
     int selectedIndex = 0;
 
     static LRESULT CALLBACK StaticWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -141,7 +143,7 @@ private:
             
             // Draw text regardless
             SetTextColor(hdc, (i == selectedIndex) ? colors[1][0] : colors[0][0]);
-            DrawTextW(hdc, suggestions[i].c_str(), -1, &textRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+            DrawTextW(hdc, suggestions[i][1].c_str(), -1, &textRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
         }
 
         // End
@@ -187,8 +189,8 @@ private:
                 {
                     if (!suggestions.empty())
                         onSelect(suggestions[selectedIndex]);
-                    else
-                        onSelect(input);
+                    //else // TODO Handle default input
+                    //    onSelect(input);
                     DestroyWindow(hwnd);
                 }
                 return 0;

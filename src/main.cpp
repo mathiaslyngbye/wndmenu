@@ -10,17 +10,19 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR, int)
     ScanResult result = scanTargets(targets);
     sort(result.entries);
     
-    auto search = [&](const std::wstring& prefix) {
-        std::vector<std::wstring> out;
-        out.push_back(L"TestA");
-        out.push_back(L"TestB");
-        out.push_back(L"TestC");
-        out.push_back(L"TestD");
+    auto search = [&](const std::wstring& prefix)
+    {
+        std::vector<Suggestion> out;
+        out.push_back({L"PATH", L"TestA"});
+        out.push_back({L"PATH", L"TestA"});
+        out.push_back({L"PATH", L"TestA"});
+        out.push_back({L"PATH", L"TestA"});
         return out;
     };
-
-    auto launch = [&](const std::wstring& choice) {
-        return;
+    
+    auto launch = [&](const Suggestion& choice)
+    {
+        ;
     };
 
     PrefixMenuBar bar(search, launch);
