@@ -13,12 +13,12 @@ public:
                   SelectionHandler selector,
                   int height = 30,
                   int maxSuggestions = 5)
-        : _provider(provider),
-          _onSelect(selector),
-          _barHeight(height),
-          _lineHeight(height),
-          _maxSuggestions(maxSuggestions),
-          _hInstance(GetModuleHandle(nullptr)) {}
+        : provider(provider),
+          onSelect(selector),
+          barHeight(height),
+          lineHeight(height),
+          maxSuggestions(maxSuggestions),
+          hInstance(GetModuleHandle(nullptr)) {}
 
     void run() {
         registerClass();
@@ -34,13 +34,13 @@ public:
     }
 
 private:
-    SuggestionProvider _provider;
-    SelectionHandler _onSelect;
-    int _barHeight;
-    int _maxSuggestions;
-    int _lineHeight = 20;
+    SuggestionProvider provider;
+    SelectionHandler onSelect;
+    int barHeight;
+    int maxSuggestions;
+    int lineHeight = 20;
     HWND _hwnd;
-    HINSTANCE _hInstance;
+    HINSTANCE hInstance;
     std::wstring _input;
     std::vector<std::wstring> _suggestions;
     int _selectedIndex = 0;
@@ -59,7 +59,7 @@ private:
     void registerClass() {
         WNDCLASS wc = {};
         wc.lpfnWndProc = StaticWndProc;
-        wc.hInstance = _hInstance;
+        wc.hInstance = hInstance;
         wc.lpszClassName = L"PrefixMenuBarClass";
         wc.hCursor = LoadCursor(nullptr, IDC_IBEAM);
         wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
@@ -69,7 +69,7 @@ private:
     void createWindow() 
     {
         int width = 500;
-        int height = _barHeight + _maxSuggestions * _lineHeight;
+        int height = barHeight + maxSuggestions * lineHeight;
         int x = (GetSystemMetrics(SM_CXSCREEN)/2)-(width/2);
         int y = (GetSystemMetrics(SM_CYSCREEN)/2)-(height/2);
 
@@ -83,7 +83,7 @@ private:
             width,
             height,
             nullptr, nullptr,
-            _hInstance,
+            hInstance,
             this
         );
         SetFocus(_hwnd);
@@ -100,9 +100,9 @@ private:
 
     void updateSuggestions()
     {
-        _suggestions = _provider(_input);
-        if (_suggestions.size() > _maxSuggestions)
-            _suggestions.resize(_maxSuggestions);
+        _suggestions = provider(_input);
+        if (_suggestions.size() > maxSuggestions)
+            _suggestions.resize(maxSuggestions);
         _selectedIndex = 0;
         InvalidateRect(_hwnd, nullptr, TRUE);
     }
@@ -116,11 +116,11 @@ private:
         FillRect(hdc, &rect, (HBRUSH)(COLOR_WINDOW + 1));
 
         SetBkMode(hdc, TRANSPARENT);
-        RECT inputRect = {0, 0, rect.right, _barHeight};
+        RECT inputRect = {0, 0, rect.right, barHeight};
         DrawTextW(hdc, _input.c_str(), -1, &inputRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
         for (size_t i = 0; i < _suggestions.size(); ++i) {
-            RECT line = {0, _barHeight + int(i * _lineHeight), rect.right, _barHeight + int((i+1) * _lineHeight)};
+            RECT line = {0, barHeight + int(i * lineHeight), rect.right, barHeight + int((i+1) * lineHeight)};
             if ((int)i == _selectedIndex) {
                 HBRUSH highlight = CreateSolidBrush(RGB(200, 200, 255));
                 FillRect(hdc, &line, highlight);
@@ -169,9 +169,9 @@ private:
                 else if (wp == VK_RETURN)
                 {
                     if (!_suggestions.empty())
-                        _onSelect(_suggestions[_selectedIndex]);
+                        onSelect(_suggestions[_selectedIndex]);
                     else
-                        _onSelect(_input);
+                        onSelect(_input);
                     DestroyWindow(hwnd);
                 }
                 return 0;
