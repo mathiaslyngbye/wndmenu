@@ -12,9 +12,7 @@ using SelectionHandler   = std::function<void(const std::wstring&)>;
 class PrefixMenuBar
 {
 public:
-    PrefixMenuBar(SuggestionProvider provider,
-                  SelectionHandler selector,
-                  int lines = 5)
+    PrefixMenuBar(SuggestionProvider provider, SelectionHandler selector)
         : provider(provider),
           onSelect(selector),
           hInstance(GetModuleHandle(nullptr)) 
@@ -25,14 +23,6 @@ public:
         registerClass();
         createWindow();
         messageLoop();
-    }
-
-    void runAsync()
-    {
-        CreateThread(nullptr, 0, [](LPVOID param) -> DWORD {
-            static_cast<PrefixMenuBar*>(param)->run();
-            return 0;
-        }, this, 0, nullptr);
     }
 
 private:
