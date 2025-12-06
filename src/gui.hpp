@@ -164,12 +164,12 @@ private:
             case WM_KEYDOWN:
                 if (wp == VK_DOWN)
                 {
-                    selectedIndex = (selectedIndex + 1) % suggestions.size();
+                    selectedIndex = (selectedIndex < suggestions.size()-1) ? (selectedIndex + 1) : (suggestions.size() - 1);
                     InvalidateRect(hwnd, nullptr, TRUE);
                 } 
                 else if (wp == VK_UP)
                 {
-                    selectedIndex = (selectedIndex + suggestions.size() - 1) % suggestions.size();
+                    selectedIndex = (selectedIndex > 0) ? (selectedIndex - 1) : 0;
                     InvalidateRect(hwnd, nullptr, TRUE);
                 } 
                 else if (wp == VK_RETURN)
