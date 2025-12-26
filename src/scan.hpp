@@ -7,17 +7,7 @@
 #include <vector>
 #include <future>
 
-struct ScanEntry
-{
-    std::string name;
-    uint32_t index;
-};
-
-struct ScanResult
-{
-    std::vector<std::string> directories;
-    std::vector<ScanEntry> entries;
-};
+#include "tree.hpp"
 
 ScanResult scanTarget(const Target& target)
 {
