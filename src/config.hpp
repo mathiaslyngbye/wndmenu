@@ -19,11 +19,11 @@ inline constexpr std::array<std::array<COLORREF, 2>, 3> colors = {{
 // Sources
 inline const std::vector<Target> targets = {
     /* Path                         depth       extensions*/
-    {"C:\\Program Files",           1,          {".exe"}},
-    {"C:\\Program Files (x86)",     1,          {".exe"}}
+    {"C:\\Program Files",           3,          {".exe"}},
+    {"C:\\Program Files (x86)",     3,          {".exe"}}
 };
 
-// Lines
+// Lines (TODO)
 // If non-zero, use vertical line layout
 inline const unsigned int lines = 0;
 
