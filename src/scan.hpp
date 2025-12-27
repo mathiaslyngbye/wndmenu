@@ -66,24 +66,21 @@ static ScanResult scanTarget(const Target& target)
 
         for (const auto& directoryEntry : directoryIterator)
         {
-            // Add directories to search
-            if (directoryEntry.is_directory(errorCode))
-            {
-                if (!errorCode) 
-                    stack.push_back({directoryEntry.path(), current.depth + 1});
-
-                errorCode.clear();
-                continue;
-            }
-            errorCode.clear();
-
-            // Catch non regular
-            if (!directoryEntry.is_regular_file(errorCode)) 
+            auto status = directoryEntry.symlink_status(errorCode);
+            if (errorCode) 
             {
                 errorCode.clear();
                 continue;
             }
-            errorCode.clear();
+            else if(status.type() == std::filesystem::file_type::directory)
+            {
+                stack.push_back({directoryEntry.path(), current.depth + 1});
+                continue;
+            }
+            else if (status.type() != std::filesystem::file_type::regular)
+            {
+                continue;
+            }
 
             // Assert extension
             const auto& path = directoryEntry.path();
@@ -96,12 +93,11 @@ static ScanResult scanTarget(const Target& target)
             std::wstring_view entryName = (dot == std::wstring::npos)
                 ? std::wstring_view(fileName)
                 : std::wstring_view(fileName).substr(0, dot);
-
-            std::wstring_view entryPath = std::wstring_view(path.native());
+            auto entryPath = path.native();
 
             ScanEntry entry;
             entry.name = intern(result.pool, entryName);
-            entry.path = intern(result.pool, entryPath);
+            entry.path = intern(result.pool, std::wstring_view(entryPath));
             result.entries.push_back(entry);
         }
     }
