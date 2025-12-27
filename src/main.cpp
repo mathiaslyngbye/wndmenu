@@ -7,26 +7,43 @@
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR, int)
 {
-    ScanResult result = scanTargets(targets);
-    sort(result.entries);
-    
+    // Scan targets
+    ScanResult result = scanTargets(targets); /* Est. 85ms */
+
+    // Sort entries post scan
+    std::sort(
+        result.entries.begin(),
+        result.entries.end(),
+        [&](const ScanEntry& a, const ScanEntry& b) {
+            return compare(view(result, a.name), view(result, b.name)) < 0;
+        }
+    );
+
     auto find = [&](const std::wstring& prefix)
     {
-        std::string narrow(prefix.begin(), prefix.end());
-        auto matches = search(result.entries, narrow, 10);
-        
-        // For now, copy all matches
+        auto matches = prefixSearch(result, prefix, 10);
+
         std::vector<Suggestion> out;
+        out.reserve(matches.size());
+
         for (const ScanEntry* entry : matches)
         {
-            std::wstring directory(result.directories[entry->index].begin(), result.directories[entry->index].end());
-            std::wstring name(entry->name.begin(), entry->name.end());
-            out.push_back({directory, name});
+            std::wstring_view full = view(result, entry->path);
+
+            std::filesystem::path p(full);
+
+            std::wstring directory = p.parent_path().native();
+            std::wstring name(view(result, entry->name));
+
+            out.push_back({
+                std::move(directory),
+                std::move(name)
+            });
         }
 
         return out;
     };
-    
+
     auto launch = [&](const Suggestion& choice)
     {
         // Get command
