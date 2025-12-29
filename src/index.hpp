@@ -72,7 +72,6 @@ static std::vector<const FileEntry*> search(
     std::wstring_view prefix)
 {
     std::vector<const FileEntry*> out;
-    // out.reserve( ? ); /* TODO */
 
     for (const FileEntry& entry : index.entries)
     {
