@@ -1,31 +1,23 @@
-wndmenu - improved application launching on MS Windows.
+wndmenu
 =======================================================
-
-Building from Source
-====================
-
-This project supports building from source on Windows using CMake and Visual
-Studio Build Tools.
+wndmenu is an efficient application menu for Windows.
 
 Requirements
 ------------
+In order to build wndmenu you need Visual Studio Build Tools 2022.
 
-Visual Studio Build Tools 2022: https://visualstudio.microsoft.com/downloads/
+Installation
+------------------
+Open x64 Native Tools Command Prompt for VS 2022.
+
+Afterwards, enter the following command to build and install wndmenu:
+
+    nmake clean install
+
+wndmenu is installed into %LOCALAPPDATA%\wndmenu and registered in 
+HKCU\...\App Paths.
 
 Configuration
 -------------
-
-Configuration is done by modifying src/config.hpp as desired and (re)compiling.
-
-Build Instructions
-------------------
-
-* Open x64 Native Tools Command Prompt for VS 2022
-* Build the project:
-
-    mkdir build
-    cd build
-    cmake .. -G "NMake Makefiles"
-    nmake
-
-* The resulting executable (wndmenu.exe) will be located in the build directory.
+The configuration of wndmenu is done by editing config.hpp and (re)compiling the
+source code.
