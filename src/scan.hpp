@@ -7,7 +7,7 @@
 #include <vector>
 #include <future>
 
-#include "tree.hpp"
+#include "index.hpp"
 #include "compare.hpp"
 
 struct StackItem

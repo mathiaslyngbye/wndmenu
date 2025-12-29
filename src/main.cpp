@@ -4,7 +4,7 @@
 #include "gui.hpp"
 #include "config.hpp"
 #include "scan.hpp"
-#include "tree.hpp"
+#include "index.hpp"
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR, int)
 {
