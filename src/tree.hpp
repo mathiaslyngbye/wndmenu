@@ -1,52 +1,53 @@
-#ifndef TREE_HPP
-#define TREE_HPP
+#ifndef INDEX_HPP
+#define INDEX_HPP
 
 #include <vector>
+#include <string>
 
 #include "compare.hpp"
 
-struct PoolReference
+struct StringRef
 {
     uint32_t offset;
     uint32_t length;
 };
 
-struct ScanEntry
+struct FileEntry
 {
-    PoolReference path;
-    PoolReference name;
+    StringRef path; /* Full path + file name */
+    StringRef name; /* Searchable name */
 };
 
-struct ScanResult
+struct FileIndex
 {
-    std::vector<ScanEntry> entries;
+    std::vector<FileEntry> entries;
     std::vector<wchar_t> pool;
 };
 
-static PoolReference intern(std::vector<wchar_t>& pool, std::wstring_view item)
+static StringRef intern(std::vector<wchar_t>& pool, std::wstring_view item)
 {
-    PoolReference reference{ (uint32_t)pool.size(), (uint32_t)item.size() };
+    StringRef reference{ (uint32_t)pool.size(), (uint32_t)item.size() };
     pool.insert(pool.end(), item.begin(), item.end());
-    pool.push_back(L'\0'); // Make it easy to pass to CreateProcess
+    pool.push_back(L'\0'); /* Easy to passing to CreateProcess */
     return reference;
 }
 
-static std::wstring_view view(const ScanResult& result, PoolReference reference)
+static std::wstring_view view(const FileIndex& index, StringRef reference)
 {
     return std::wstring_view(
-        (result.pool.data() + reference.offset),
+        (index.pool.data() + reference.offset),
         reference.length
     );
 }
 
-static const wchar_t* c_str(const ScanResult& result, PoolReference reference)
+static const wchar_t* c_str(const FileIndex& index, StringRef reference)
 {
-    return result.pool.data() + reference.offset;
+    return (index.pool.data() + reference.offset);
 }
 
-static void append(ScanResult& destination, ScanResult&& source)
+static void append(FileIndex& destination, FileIndex&& source)
 {
-    const uint32_t base = (uint32_t)destination.pool.size();
+    const uint32_t size = (uint32_t)destination.pool.size();
 
     destination.pool.insert(
         destination.pool.end(),
@@ -55,38 +56,32 @@ static void append(ScanResult& destination, ScanResult&& source)
     );
 
     destination.entries.reserve(
-        destination.entries.size() + source.entries.size()
+        (destination.entries.size() + source.entries.size())
     );
 
-    for (ScanEntry& entry : source.entries)
+    for (FileEntry& entry : source.entries)
     {
-        entry.name.offset += base;
-        entry.path.offset += base;
+        entry.name.offset += size;
+        entry.path.offset += size;
         destination.entries.push_back(entry);
     }
 }
 
-static std::vector<const ScanEntry*> prefixSearch(
-    const ScanResult& result,
-    std::wstring_view prefix,
-    size_t limit)
+static std::vector<const FileEntry*> search(
+    const FileIndex& index,
+    std::wstring_view prefix)
 {
-    std::vector<const ScanEntry*> out;
-    out.reserve(limit);
+    std::vector<const FileEntry*> out;
+    // out.reserve( ? ); /* TODO */
 
-    for (const ScanEntry& entry : result.entries)
+    for (const FileEntry& entry : index.entries)
     {
-        std::wstring_view name = view(result, entry.name);
+        std::wstring_view name = view(index, entry.name);
         if (startsWith(name, prefix))
-        {
             out.push_back(&entry);
-            if (out.size() >= limit)
-                break;
-        }
     }
 
     return out;
 }
-
 
 #endif

@@ -31,9 +31,9 @@ static bool valid(std::wstring_view fileName, const std::vector<std::filesystem:
     return false;
 }
 
-static ScanResult scanTarget(const Target& target)
+static FileIndex scanTarget(const Target& target)
 {
-    ScanResult result;
+    FileIndex result;
     result.entries.reserve(8192);
     result.pool.reserve(1 << 20);
 
@@ -61,13 +61,13 @@ static ScanResult scanTarget(const Target& target)
         if (errorCode)
         {
             errorCode.clear();
-            continue; 
+            continue;
         }
 
         for (const auto& directoryEntry : directoryIterator)
         {
             auto status = directoryEntry.symlink_status(errorCode);
-            if (errorCode) 
+            if (errorCode)
             {
                 errorCode.clear();
                 continue;
@@ -95,7 +95,7 @@ static ScanResult scanTarget(const Target& target)
                 : std::wstring_view(fileName).substr(0, dot);
             auto entryPath = path.native();
 
-            ScanEntry entry;
+            FileEntry entry;
             entry.name = intern(result.pool, entryName);
             entry.path = intern(result.pool, std::wstring_view(entryPath));
             result.entries.push_back(entry);
@@ -105,10 +105,10 @@ static ScanResult scanTarget(const Target& target)
     return result;
 }
 
-ScanResult scanTargets(const std::vector<Target>& targets)
+FileIndex scanTargets(const std::vector<Target>& targets)
 {
     // Create futures
-    std::vector<std::future<ScanResult>> futures;
+    std::vector<std::future<FileIndex>> futures;
     futures.reserve(targets.size());
     for (size_t i = 0; i < targets.size(); i++)
     {
@@ -118,10 +118,10 @@ ScanResult scanTargets(const std::vector<Target>& targets)
     }
 
     // Construct result
-    ScanResult result;
+    FileIndex result;
     result.entries.reserve(16384);
     result.pool.reserve(1 << 21);
-    for (std::future<ScanResult>& future : futures)
+    for (std::future<FileIndex>& future : futures)
         append(result, future.get());
 
     return result;

@@ -4,36 +4,37 @@
 #include "gui.hpp"
 #include "config.hpp"
 #include "scan.hpp"
+#include "tree.hpp"
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR, int)
 {
-    // Scan targets
-    ScanResult result = scanTargets(targets); /* Est. 85ms */
+    // Index files
+    FileIndex index = scanTargets(targets); /* ~85ms */
 
-    // Sort entries post scan
+    // Captilization indifferent sort
     std::sort(
-        result.entries.begin(),
-        result.entries.end(),
-        [&](const ScanEntry& a, const ScanEntry& b) {
-            return compare(view(result, a.name), view(result, b.name)) < 0;
+        index.entries.begin(),
+        index.entries.end(),
+        [&](const FileEntry& a, const FileEntry& b) {
+            return (compare(view(index, a.name), view(index, b.name)) < 0);
         }
     );
 
     auto find = [&](const std::wstring& prefix)
     {
-        auto matches = prefixSearch(result, prefix, 10);
+        auto matches = search(index, prefix);
 
         std::vector<Suggestion> out;
         out.reserve(matches.size());
 
-        for (const ScanEntry* entry : matches)
+        for (const FileEntry* entry : matches)
         {
-            std::wstring_view full = view(result, entry->path);
+            std::wstring_view full = view(index, entry->path);
 
             std::filesystem::path p(full);
 
             std::wstring directory = p.parent_path().native();
-            std::wstring name(view(result, entry->name));
+            std::wstring name(view(index, entry->name));
 
             out.push_back({
                 std::move(directory),
