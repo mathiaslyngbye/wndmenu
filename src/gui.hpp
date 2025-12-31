@@ -17,7 +17,7 @@ public:
     PrefixMenuBar(SuggestionProvider provider, SelectionHandler selector)
         : provider(provider),
           onSelect(selector),
-          hInstance(GetModuleHandle(nullptr)) 
+          hInstance(GetModuleHandle(nullptr))
     {}
 
     void run()
@@ -50,7 +50,7 @@ private:
         }
         else
             self = reinterpret_cast<PrefixMenuBar*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
-        
+
         return self ? self->WndProc(hwnd, msg, wp, lp) : DefWindowProc(hwnd, msg, wp, lp);
     }
 
@@ -65,7 +65,7 @@ private:
         RegisterClass(&wc);
     }
 
-    void createWindow() 
+    void createWindow()
     {
         int width = 500;
         int height = lineHeight + (lines * lineHeight);
@@ -102,8 +102,6 @@ private:
     void updateSuggestions()
     {
         suggestions = provider(input);
-        if (suggestions.size() > lines)
-            suggestions.resize(lines);
         selectedIndex = 0;
         InvalidateRect(hwnd, nullptr, TRUE);
     }
@@ -113,7 +111,7 @@ private:
         // Initialize
         PAINTSTRUCT ps;
         HDC hdc = BeginPaint(hwnd, &ps);
-        
+
         // Draw background
         RECT backgroundRect;
         GetClientRect(hwnd, &backgroundRect);
@@ -128,43 +126,47 @@ private:
         DrawTextW(hdc, input.c_str(), -1, &inputRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
         // Draw suggestions
-        for (size_t i = 0; i < suggestions.size(); i++)
+        for (size_t i = 0; i < lines; i++)
         {
             RECT lineRect = {0,             (lineHeight + int(i * lineHeight)), backgroundRect.right,   (lineHeight + int((i+1) * lineHeight))};
             RECT textRect = {lineIndent,    (lineHeight + int(i * lineHeight)), backgroundRect.right,   (lineHeight + int((i+1) * lineHeight))};
 
             // Draw extra rectangle on highlight
-            if ((int)i == selectedIndex)
+            int suggestionIndex = (selectedIndex / lines)*lines + i;
+            if ((int)suggestionIndex == selectedIndex)
             {
                 HBRUSH lineBrush = CreateSolidBrush(colors[1][1]);
                 FillRect(hdc, &lineRect, lineBrush);
                 DeleteObject(lineBrush);
             }
-            
+
             // Draw text regardless
-            SetTextColor(hdc, (i == selectedIndex) ? colors[1][0] : colors[0][0]);
-            DrawTextW(hdc, suggestions[i][1].c_str(), -1, &textRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+            if (suggestionIndex < suggestions.size())
+            {
+                SetTextColor(hdc, (i == (selectedIndex % lines)) ? colors[1][0] : colors[0][0]);
+                DrawTextW(hdc, suggestions[suggestionIndex][1].c_str(), -1, &textRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+            }
         }
 
         // End
         EndPaint(hwnd, &ps);
     }
 
-    LRESULT WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) 
+    LRESULT WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     {
-        switch (msg) 
+        switch (msg)
         {
             // Input handling
             case WM_CHAR:
                 if (wp == VK_ESCAPE)
                 {
                     DestroyWindow(hwnd);
-                } 
+                }
                 else if (wp == VK_BACK && !input.empty())
                 {
                     input.pop_back();
                     updateSuggestions();
-                } 
+                }
                 else if (wp >= 32 && wp <= 126)
                 {
                     input.push_back(static_cast<wchar_t>(wp));
@@ -179,12 +181,12 @@ private:
                 {
                     selectedIndex = (selectedIndex < suggestions.size()-1) ? (selectedIndex + 1) : (suggestions.size() - 1);
                     InvalidateRect(hwnd, nullptr, TRUE);
-                } 
+                }
                 else if (wp == VK_UP)
                 {
                     selectedIndex = (selectedIndex > 0) ? (selectedIndex - 1) : 0;
                     InvalidateRect(hwnd, nullptr, TRUE);
-                } 
+                }
                 else if (wp == VK_RETURN)
                 {
                     if (!suggestions.empty())
@@ -202,7 +204,7 @@ private:
             case WM_DESTROY:
                 PostQuitMessage(0);
                 return 0;
-            
+
             case WM_KILLFOCUS:
                 DestroyWindow(hwnd);
                 return 0;
