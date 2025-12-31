@@ -187,6 +187,13 @@ private:
                     selectedIndex = (selectedIndex > 0) ? (selectedIndex - 1) : 0;
                     InvalidateRect(hwnd, nullptr, TRUE);
                 }
+                else if (wp == VK_TAB)
+                {
+                    input = suggestions[0][1].c_str();
+                    selectedIndex = 0;
+                    InvalidateRect(hwnd, nullptr, TRUE);
+                    updateSuggestions();
+                }
                 else if (wp == VK_RETURN)
                 {
                     if (!suggestions.empty())
