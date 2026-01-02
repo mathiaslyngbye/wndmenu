@@ -18,7 +18,6 @@ struct App
     HWND window{};
 
     /* layout */
-    int lines       = 10;
     int lineWidth   = 500;
     int lineHeight  = 19;
     int indent      = 6;
@@ -27,11 +26,6 @@ struct App
     std::wstring query;
     std::vector<uint32_t> results;
     int selected = 0;
-
-    int page() const
-    {
-        return (lines > 0) ? (selected / lines) * lines : 0;
-    }
 };
 
 #endif

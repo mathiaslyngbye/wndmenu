@@ -49,9 +49,8 @@ static void paint(const App& app)
     }
 
     /* Suggestions */
-    const int page = app.page();
-
-    for (int row = 0; row < app.lines; row++)
+    const int page = (lines > 0) ? (app.selected / lines) * lines : 0;
+    for (int row = 0; row < lines; row++)
     {
         const int y0 = app.lineHeight + (row * app.lineHeight);
         const int y1 = y0 + app.lineHeight;
@@ -194,7 +193,7 @@ int run(App& app)
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     RegisterClass(&wc);
 
-    const int height = app.lineHeight + app.lines * app.lineHeight;
+    const int height = app.lineHeight + lines * app.lineHeight;
     const int width  = app.lineWidth;
     const int x = (GetSystemMetrics(SM_CXSCREEN) - app.lineWidth) / 2;
     const int y = (GetSystemMetrics(SM_CYSCREEN) - height) / 2;
