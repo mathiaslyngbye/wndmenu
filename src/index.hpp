@@ -18,7 +18,7 @@ struct FileEntry
     StringRef name; /* Searchable name */
 };
 
-struct FileIndex
+struct Index
 {
     std::vector<FileEntry> entries;
     std::vector<wchar_t> pool;
@@ -32,7 +32,7 @@ static StringRef intern(std::vector<wchar_t>& pool, std::wstring_view item)
     return reference;
 }
 
-static std::wstring_view view(const FileIndex& index, StringRef reference)
+static std::wstring_view view(const Index& index, StringRef reference)
 {
     return std::wstring_view(
         (index.pool.data() + reference.offset),
@@ -40,12 +40,12 @@ static std::wstring_view view(const FileIndex& index, StringRef reference)
     );
 }
 
-static const wchar_t* c_str(const FileIndex& index, StringRef reference)
+static const wchar_t* c_str(const Index& index, StringRef reference)
 {
     return (index.pool.data() + reference.offset);
 }
 
-static void append(FileIndex& destination, FileIndex&& source)
+static void append(Index& destination, Index&& source)
 {
     const uint32_t size = (uint32_t)destination.pool.size();
 
@@ -65,22 +65,6 @@ static void append(FileIndex& destination, FileIndex&& source)
         entry.path.offset += size;
         destination.entries.push_back(entry);
     }
-}
-
-static std::vector<const FileEntry*> search(
-    const FileIndex& index,
-    std::wstring_view prefix)
-{
-    std::vector<const FileEntry*> out;
-
-    for (const FileEntry& entry : index.entries)
-    {
-        std::wstring_view name = view(index, entry.name);
-        if (startsWith(name, prefix))
-            out.push_back(&entry);
-    }
-
-    return out;
 }
 
 #endif
