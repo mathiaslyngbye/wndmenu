@@ -1,14 +1,13 @@
-#ifndef SCAN_HPP
-#define SCAN_HPP
-
-#include <filesystem>
-#include <iostream>
-#include <unordered_map>
-#include <vector>
+#include <windows.h>
+#include <algorithm>
+#include <cwctype>
 #include <future>
 
+#include "control.hpp"
 #include "index.hpp"
 #include "compare.hpp"
+#include "target.hpp"
+#include "config.hpp"
 
 struct StackItem
 {
@@ -31,9 +30,9 @@ static bool valid(std::wstring_view fileName, const std::vector<std::filesystem:
     return false;
 }
 
-static FileIndex scanTarget(const Target& target)
+static Index scanTarget(const Target& target)
 {
-    FileIndex result;
+    Index result;
     result.entries.reserve(8192);
     result.pool.reserve(1 << 20);
 
@@ -105,10 +104,10 @@ static FileIndex scanTarget(const Target& target)
     return result;
 }
 
-FileIndex scanTargets(const std::vector<Target>& targets)
+Index scanTargets(const std::vector<Target>& targets)
 {
     // Create futures
-    std::vector<std::future<FileIndex>> futures;
+    std::vector<std::future<Index>> futures;
     futures.reserve(targets.size());
     for (size_t i = 0; i < targets.size(); i++)
     {
@@ -118,13 +117,55 @@ FileIndex scanTargets(const std::vector<Target>& targets)
     }
 
     // Construct result
-    FileIndex result;
+    Index result;
     result.entries.reserve(16384);
     result.pool.reserve(1 << 21);
-    for (std::future<FileIndex>& future : futures)
+    for (std::future<Index>& future : futures)
         append(result, future.get());
 
     return result;
 }
 
-#endif // SCAN_HPP
+Index scan()
+{
+    return scanTargets(targets);
+}
+
+void search(const Index& index, std::wstring_view query, std::vector<uint32_t>& out)
+{
+    out.clear();
+
+    for (uint32_t i = 0; i < index.entries.size(); ++i)
+    {
+        const FileEntry& e = index.entries[i];
+        std::wstring_view name = view(index, e.name);
+
+        if (startsWith(name, query))
+            out.push_back(i);
+    }
+}
+
+void launch(const Index& index, uint32_t id)
+{
+    if (id >= index.entries.size())
+        return;
+
+    const FileEntry& e = index.entries[id];
+
+    ShellExecuteW(
+        nullptr,
+        L"open",
+        c_str(index, e.path),
+        nullptr,
+        nullptr,
+        SW_SHOWNORMAL
+    );
+}
+
+std::wstring_view display(const Index& index, uint32_t id)
+{
+    if (id >= index.entries.size())
+        return L"";
+
+    return view(index, index.entries[id].name);
+}

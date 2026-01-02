@@ -1,12 +1,12 @@
 APP=wndmenu
 EXE=$(APP).exe
 OUTDIR=build
-SRCS=src\main.cpp
+SRCS=src\main.cpp src\gui.cpp src\control.cpp
 
 CXX=cl
 CXXFLAGS=/nologo /std:c++17 /O2 /GL /GF /Gy /fp:fast /Zc:inline /GR- /EHsc /DNDEBUG /DUNICODE /D_UNICODE
-LDFLAGS=/nologo /LTCG /OPT:REF /OPT:ICF /SUBSYSTEM:WINDOWS user32.lib gdi32.lib
-
+#LDFLAGS=/nologo /LTCG /OPT:REF /OPT:ICF /SUBSYSTEM:WINDOWS user32.lib gdi32.lib
+LDFLAGS=/nologo /LTCG /OPT:REF /OPT:ICF user32.lib gdi32.lib shell32.lib
 
 all: $(OUTDIR)\$(EXE)
 
