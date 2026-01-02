@@ -3,10 +3,9 @@
 
 #include <string>
 #include <array>
+#include <windows.h>
 
 #include "target.hpp"
-
-#include <windows.h>
 
 inline constexpr std::array<std::array<COLORREF, 2>, 3> colors = {{
     /* fg                       bg */
@@ -15,16 +14,14 @@ inline constexpr std::array<std::array<COLORREF, 2>, 3> colors = {{
     { RGB(0x00, 0x00, 0x00),    RGB(0x00, 0xff, 0xff) }, /* Out */
 }};
 
-
-// Sources
+/* Sources */
 inline const std::vector<Target> targets = {
-    /* Path                         depth       extensions*/
-    {L"C:\\Program Files",           3,          {L".exe"}},
-    {L"C:\\Program Files (x86)",     3,          {L".exe"}}
+    /* Path                         depth       extensions */
+    {L"C:\\Program Files",           3,         {L".exe"}},
+    {L"C:\\Program Files (x86)",     3,         {L".exe"}}
 };
 
-// Lines (TODO)
-// If non-zero, use vertical line layout
+/* Layout */
 inline const unsigned int lines = 0;
 
 #endif

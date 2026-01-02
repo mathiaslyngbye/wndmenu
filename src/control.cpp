@@ -1,9 +1,10 @@
+#include "control.hpp"
+
 #include <windows.h>
 #include <algorithm>
 #include <cwctype>
 #include <future>
 
-#include "control.hpp"
 #include "index.hpp"
 #include "compare.hpp"
 #include "target.hpp"
