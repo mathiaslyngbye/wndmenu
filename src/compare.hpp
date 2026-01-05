@@ -66,4 +66,30 @@ static bool endsWith(std::wstring_view item, std::wstring_view suffix) noexcept
     return true;
 }
 
+static bool contains(std::wstring_view haystack, std::wstring_view needle) noexcept
+{
+    if (needle.empty())
+        return true;
+
+    if (needle.size() > haystack.size())
+        return false;
+
+    for (size_t i = 0; i + needle.size() <= haystack.size(); i++)
+    {
+        bool ok = true;
+        for (size_t j = 0; j < needle.size(); j++)
+        {
+            if (fold(haystack[i + j]) != fold(needle[j]))
+            {
+                ok = false;
+                break;
+            }
+        }
+        if (ok)
+            return true;
+    }
+
+    return false;
+}
+
 #endif

@@ -123,13 +123,31 @@ Index scan()
 void search(const Index& index, std::wstring_view query, std::vector<uint32_t>& out)
 {
     out.clear();
+    std::vector<uint8_t> found(index.entries.size(), 0);
 
-    for (uint32_t i = 0; i < (uint32_t)index.entries.size(); i++)
+    // Prefix matching
+    for (uint32_t i = 0; i < index.entries.size(); i++)
     {
-        const Entry& e = index.entries[i];
-        std::wstring_view name = view(index, e.name);
+        const Entry& entry = index.entries[i];
+        const std::wstring_view name = view(index, entry.name);
 
         if (startsWith(name, query))
+        {
+            out.push_back(i);
+            found[i] = 1;
+        }
+    }
+
+    // Substring matching
+    for (uint32_t i = 0; i < index.entries.size(); i++)
+    {
+        if (found[i])
+            continue;
+
+        const Entry& entry = index.entries[i];
+        const std::wstring_view name = view(index, entry.name);
+
+        if (contains(name, query))
             out.push_back(i);
     }
 }
