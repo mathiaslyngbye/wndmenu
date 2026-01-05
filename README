@@ -1,5 +1,5 @@
 wndmenu
-=======================================================
+=======
 wndmenu is an efficient application menu for Windows.
 
 Requirements
@@ -7,7 +7,7 @@ Requirements
 In order to build wndmenu you need Visual Studio Build Tools 2022.
 
 Installation
-------------------
+------------
 Open x64 Native Tools Command Prompt for VS 2022.
 
 Afterwards, enter the following command to build and install wndmenu:
