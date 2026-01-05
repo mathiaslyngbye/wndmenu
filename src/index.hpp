@@ -12,7 +12,7 @@ struct StringRef
     uint32_t length;
 };
 
-struct FileEntry
+struct Entry
 {
     StringRef path; /* Full path + file name */
     StringRef name; /* Searchable name */
@@ -20,7 +20,7 @@ struct FileEntry
 
 struct Index
 {
-    std::vector<FileEntry> entries;
+    std::vector<Entry> entries;
     std::vector<wchar_t> pool;
 };
 
@@ -59,7 +59,7 @@ static void append(Index& destination, Index&& source)
         (destination.entries.size() + source.entries.size())
     );
 
-    for (FileEntry& entry : source.entries)
+    for (Entry& entry : source.entries)
     {
         entry.name.offset += size;
         entry.path.offset += size;

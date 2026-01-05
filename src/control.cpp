@@ -1,144 +1,132 @@
 #include "control.hpp"
 
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+
 #include <windows.h>
+#include <shellapi.h>
+#include <shlobj.h>
+
 #include <algorithm>
-#include <cwctype>
-#include <future>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <unordered_set>
+#include <filesystem>
 
 #include "index.hpp"
 #include "compare.hpp"
-#include "target.hpp"
-#include "config.hpp"
 
-struct StackItem
+static std::wstring stem(std::wstring_view path)
 {
-    std::filesystem::path path;
-    int depth;
-};
+    size_t slash = path.find_last_of(L"\\/");
+    if (slash != std::wstring_view::npos)
+        slash += 1;
+    else
+        slash = 0;
 
-static bool valid(std::wstring_view fileName, const std::vector<std::filesystem::path::string_type>& extensions)
-{
-    const size_t dot = fileName.find_last_of(L'.');
-    if (dot == std::wstring_view::npos)
-        return false;
+    std::wstring_view name = path.substr(slash);
 
-    std::wstring_view fileExtension = fileName.substr(dot);
-    for (const auto& extension : extensions)
-    {
-        if (equals(fileExtension, std::wstring_view(extension)))
-            return true;
-    }
-    return false;
+    size_t dot = name.find_last_of(L'.');
+    if (dot != std::wstring_view::npos)
+        name = name.substr(0, dot);
+
+    return std::wstring(name);
 }
 
-static Index scanTarget(const Target& target)
+static bool addEntry(Index& index, std::unordered_set<std::wstring>& seen, std::wstring_view name, std::wstring_view path)
 {
-    Index result;
-    result.entries.reserve(8192);
-    result.pool.reserve(1 << 20);
+    if (name.empty() || path.empty())
+        return false;
 
-    std::vector<StackItem> stack;
-    stack.reserve(4096);
-    stack.push_back({target.directory, 0});
+    auto [it, inserted] = seen.emplace(name);
+    if (!inserted)
+        return false;
 
+    Entry entry{};
+    entry.name = intern(index.pool, name);
+    entry.path = intern(index.pool, path);
+    index.entries.push_back(entry);
+
+    return true;
+}
+
+static void addDirectory(Index& index, std::unordered_set<std::wstring>& seen, const std::filesystem::path& root)
+{
     std::error_code errorCode;
+    std::filesystem::recursive_directory_iterator directories(
+        root,
+        std::filesystem::directory_options::skip_permission_denied,
+        errorCode
+    );
 
-    while (!stack.empty())
+    if (errorCode)
+        return;
+
+    for (const auto& entry : directories)
     {
-        StackItem current = std::move(stack.back());
-        stack.pop_back();
-
-        // Assert search depth
-        if ((target.depth >= 0) && (current.depth > target.depth))
-            continue;
-
-        std::filesystem::directory_iterator directoryIterator(
-            current.path,
-            std::filesystem::directory_options::skip_permission_denied,
-            errorCode
-        );
-
-        if (errorCode)
+        if (entry.is_directory(errorCode))
         {
             errorCode.clear();
             continue;
         }
 
-        for (const auto& directoryEntry : directoryIterator)
+        if (!entry.is_regular_file(errorCode))
         {
-            auto status = directoryEntry.symlink_status(errorCode);
-            if (errorCode)
-            {
-                errorCode.clear();
-                continue;
-            }
-            else if(status.type() == std::filesystem::file_type::directory)
-            {
-                stack.push_back({directoryEntry.path(), current.depth + 1});
-                continue;
-            }
-            else if (status.type() != std::filesystem::file_type::regular)
-            {
-                continue;
-            }
-
-            // Assert extension
-            const auto& path = directoryEntry.path();
-            auto fileName = path.filename().native();
-            if (!valid(std::wstring_view(fileName), target.extensions))
-                continue;
-
-            // Construct entry
-            const size_t dot = fileName.find_last_of(L'.');
-            std::wstring_view entryName = (dot == std::wstring::npos)
-                ? std::wstring_view(fileName)
-                : std::wstring_view(fileName).substr(0, dot);
-            auto entryPath = path.native();
-
-            FileEntry entry;
-            entry.name = intern(result.pool, entryName);
-            entry.path = intern(result.pool, std::wstring_view(entryPath));
-            result.entries.push_back(entry);
+            errorCode.clear();
+            continue;
         }
-    }
 
-    return result;
+        const auto& path = entry.path();
+        std::wstring_view filename(path.filename().native());
+
+        if (!(endsWith(filename, L".lnk") || endsWith(filename, L".url") || endsWith(filename, L".appref-ms")))
+            continue;
+
+        std::wstring display = stem(filename);
+        std::wstring command = path.native();
+        addEntry(index, seen, display, command);
+    }
 }
 
-Index scanTargets(const std::vector<Target>& targets)
+static void addStartMenu(Index& index, std::unordered_set<std::wstring>& seen)
 {
-    // Create futures
-    std::vector<std::future<Index>> futures;
-    futures.reserve(targets.size());
-    for (size_t i = 0; i < targets.size(); i++)
+    const KNOWNFOLDERID folders[] = { FOLDERID_Programs, FOLDERID_CommonPrograms };
+
+    for (const KNOWNFOLDERID& id : folders)
     {
-        futures.emplace_back(std::async(std::launch::async, [&, i]{
-            return scanTarget(targets[i]);
-        }));
+        PWSTR pointer = nullptr;
+        if (SUCCEEDED(SHGetKnownFolderPath(id, KF_FLAG_DEFAULT, nullptr, &pointer)) && pointer)
+        {
+            std::filesystem::path root(pointer);
+            CoTaskMemFree(pointer);
+
+            addDirectory(index, seen, root);
+        }
     }
-
-    // Construct result
-    Index result;
-    result.entries.reserve(16384);
-    result.pool.reserve(1 << 21);
-    for (std::future<Index>& future : futures)
-        append(result, future.get());
-
-    return result;
 }
 
 Index scan()
 {
-    return scanTargets(targets);
+    Index index;
+    index.entries.reserve(16384);
+    index.pool.reserve(1 << 21);
+
+    std::unordered_set<std::wstring> seen;
+    seen.reserve(32768);
+
+    addStartMenu(index, seen);
+
+    return index;
 }
 
 void search(const Index& index, std::wstring_view query, std::vector<uint32_t>& out)
 {
     out.clear();
 
-    for (uint32_t i = 0; i < index.entries.size(); ++i)
+    for (uint32_t i = 0; i < (uint32_t)index.entries.size(); i++)
     {
-        const FileEntry& e = index.entries[i];
+        const Entry& e = index.entries[i];
         std::wstring_view name = view(index, e.name);
 
         if (startsWith(name, query))
@@ -151,7 +139,7 @@ void launch(const Index& index, uint32_t id)
     if (id >= index.entries.size())
         return;
 
-    const FileEntry& e = index.entries[id];
+    const Entry& e = index.entries[id];
 
     ShellExecuteW(
         nullptr,
