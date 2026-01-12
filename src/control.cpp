@@ -117,6 +117,15 @@ Index scan()
 
     addStartMenu(index, seen);
 
+    std::sort(
+        index.entries.begin(),
+        index.entries.end(),
+        [&](const Entry& lhs, const Entry& rhs)
+        {
+            return compare(view(index, lhs.name), view(index, rhs.name)) < 0;
+        }
+    );
+
     return index;
 }
 
