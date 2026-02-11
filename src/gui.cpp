@@ -43,20 +43,20 @@ static void paint(const App& app)
 
     /* Input */
     {
-        RECT textRect{ app.indent, 0, client.right, app.lineHeight };
+        RECT text_rect{ app.indent, 0, client.right, app.line_height };
         SetTextColor(hdc, colors[0][0]);
-        DrawTextW(hdc, app.query.c_str(), -1, &textRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+        DrawTextW(hdc, app.query.c_str(), -1, &text_rect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
     }
 
     /* Suggestions */
     const int page = (lines > 0) ? (app.selected / lines) * lines : 0;
     for (int row = 0; row < lines; row++)
     {
-        const int y0 = app.lineHeight + (row * app.lineHeight);
-        const int y1 = y0 + app.lineHeight;
+        const int y0 = app.line_height + (row * app.line_height);
+        const int y1 = y0 + app.line_height;
 
-        RECT lineRect{ 0, y0, client.right, y1 };
-        RECT textRect{ app.indent, y0, client.right, y1 };
+        RECT line_rect{ 0, y0, client.right, y1 };
+        RECT text_rect{ app.indent, y0, client.right, y1 };
 
         const int source = (page + row);
         const bool selected = (source == app.selected);
@@ -64,7 +64,7 @@ static void paint(const App& app)
         if (selected)
         {
             HBRUSH hl = CreateSolidBrush(colors[1][1]);
-            FillRect(hdc, &lineRect, hl);
+            FillRect(hdc, &line_rect, hl);
             DeleteObject(hl);
         }
 
@@ -74,16 +74,15 @@ static void paint(const App& app)
             std::wstring_view text = display(*app.index, id);
 
             SetTextColor(hdc, selected ? colors[1][0] : colors[0][0]);
-            DrawTextW(hdc, text.data(), (int)text.size(), &textRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+            DrawTextW(hdc, text.data(), (int)text.size(), &text_rect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
         }
     }
 
     EndPaint(app.window, &paint);
 }
 
-static void onCharacter(App& app, wchar_t character)
+static void on_character(App& app, wchar_t character)
 {
-    /* Backspace */
     if (character == L'\b')
     {
         if (!app.query.empty())
@@ -94,7 +93,6 @@ static void onCharacter(App& app, wchar_t character)
         return;
     }
 
-    /* Letters and numbers */
     if ((character >= 32) && (character <= 126))
     {
         app.query.push_back(character);
@@ -102,7 +100,7 @@ static void onCharacter(App& app, wchar_t character)
     }
 }
 
-static void onKey(App& app, WPARAM key)
+static void on_key(App& app, WPARAM key)
 {
     switch (key)
     {
@@ -159,11 +157,11 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         }
 
         case WM_CHAR:
-            onCharacter(*app, (wchar_t)wp);
+            on_character(*app, (wchar_t)wp);
             return 0;
 
         case WM_KEYDOWN:
-            onKey(*app, wp);
+            on_key(*app, wp);
             return 0;
 
         case WM_PAINT:
@@ -193,9 +191,9 @@ int run(App& app)
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     RegisterClass(&wc);
 
-    const int height = app.lineHeight + lines * app.lineHeight;
-    const int width  = app.lineWidth;
-    const int x = (GetSystemMetrics(SM_CXSCREEN) - app.lineWidth) / 2;
+    const int height = app.line_height + lines * app.line_height;
+    const int width  = app.line_width;
+    const int x = (GetSystemMetrics(SM_CXSCREEN) - app.line_width) / 2;
     const int y = (GetSystemMetrics(SM_CYSCREEN) - height) / 2;
 
     CreateWindowExW(
@@ -203,7 +201,7 @@ int run(App& app)
         wc.lpszClassName,
         nullptr,
         WS_POPUP | WS_VISIBLE,
-        x, y, app.lineWidth, height,
+        x, y, app.line_width, height,
         nullptr, nullptr,
         app.instance,
         &app

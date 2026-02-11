@@ -34,7 +34,7 @@ static std::wstring stem(std::wstring_view path)
     return std::wstring(name);
 }
 
-static bool addEntry(Index& index, std::unordered_set<std::wstring>& seen, std::wstring_view name, std::wstring_view path)
+static bool add_entry(Index& index, std::unordered_set<std::wstring>& seen, std::wstring_view name, std::wstring_view path)
 {
     if (name.empty() || path.empty())
         return false;
@@ -51,45 +51,45 @@ static bool addEntry(Index& index, std::unordered_set<std::wstring>& seen, std::
     return true;
 }
 
-static void addDirectory(Index& index, std::unordered_set<std::wstring>& seen, const std::filesystem::path& root)
+static void add_directory(Index& index, std::unordered_set<std::wstring>& seen, const std::filesystem::path& root)
 {
-    std::error_code errorCode;
+    std::error_code error;
     std::filesystem::recursive_directory_iterator directories(
         root,
         std::filesystem::directory_options::skip_permission_denied,
-        errorCode
+        error
     );
 
-    if (errorCode)
+    if (error)
         return;
 
     for (const auto& entry : directories)
     {
-        if (entry.is_directory(errorCode))
+        if (entry.is_directory(error))
         {
-            errorCode.clear();
+            error.clear();
             continue;
         }
 
-        if (!entry.is_regular_file(errorCode))
+        if (!entry.is_regular_file(error))
         {
-            errorCode.clear();
+            error.clear();
             continue;
         }
 
         const auto& path = entry.path();
         std::wstring_view filename(path.filename().native());
 
-        if (!(endsWith(filename, L".lnk") || endsWith(filename, L".url") || endsWith(filename, L".appref-ms")))
+        if (!(ends_with(filename, L".lnk") || ends_with(filename, L".url") || ends_with(filename, L".appref-ms")))
             continue;
 
         std::wstring display = stem(filename);
         std::wstring command = path.native();
-        addEntry(index, seen, display, command);
+        add_entry(index, seen, display, command);
     }
 }
 
-static void addStartMenu(Index& index, std::unordered_set<std::wstring>& seen)
+static void add_start_menu(Index& index, std::unordered_set<std::wstring>& seen)
 {
     const KNOWNFOLDERID folders[] = { FOLDERID_Programs, FOLDERID_CommonPrograms };
 
@@ -101,7 +101,7 @@ static void addStartMenu(Index& index, std::unordered_set<std::wstring>& seen)
             std::filesystem::path root(pointer);
             CoTaskMemFree(pointer);
 
-            addDirectory(index, seen, root);
+            add_directory(index, seen, root);
         }
     }
 }
@@ -115,7 +115,7 @@ Index scan()
     std::unordered_set<std::wstring> seen;
     seen.reserve(32768);
 
-    addStartMenu(index, seen);
+    add_start_menu(index, seen);
 
     std::sort(
         index.entries.begin(),
@@ -134,20 +134,18 @@ void search(const Index& index, std::wstring_view query, std::vector<uint32_t>& 
     out.clear();
     std::vector<uint8_t> found(index.entries.size(), 0);
 
-    // Prefix matching
     for (uint32_t i = 0; i < index.entries.size(); i++)
     {
         const Entry& entry = index.entries[i];
         const std::wstring_view name = view(index, entry.name);
 
-        if (startsWith(name, query))
+        if (starts_with(name, query))
         {
             out.push_back(i);
             found[i] = 1;
         }
     }
 
-    // Substring matching
     for (uint32_t i = 0; i < index.entries.size(); i++)
     {
         if (found[i])

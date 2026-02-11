@@ -41,7 +41,7 @@ static int compare(std::wstring_view a, std::wstring_view b) noexcept
     return 0;
 }
 
-static bool startsWith(std::wstring_view item, std::wstring_view prefix) noexcept
+static bool starts_with(std::wstring_view item, std::wstring_view prefix) noexcept
 {
     if (prefix.size() > item.size())
         return false;
@@ -53,7 +53,7 @@ static bool startsWith(std::wstring_view item, std::wstring_view prefix) noexcep
     return true;
 }
 
-static bool endsWith(std::wstring_view item, std::wstring_view suffix) noexcept
+static bool ends_with(std::wstring_view item, std::wstring_view suffix) noexcept
 {
     if (suffix.size() > item.size())
         return false;

@@ -18,8 +18,8 @@ struct App
     HWND window{};
 
     /* layout */
-    int lineWidth   = 500;
-    int lineHeight  = 19;
+    int line_width  = 500;
+    int line_height = 19;
     int indent      = 6;
 
     /* io */
