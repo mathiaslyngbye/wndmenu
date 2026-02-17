@@ -1,11 +1,11 @@
 #include "gui.hpp"
 
-#include <windows.h>
-#include <algorithm>
-
 #include "app.hpp"
 #include "control.hpp"
 #include "config.hpp"
+
+#include <windows.h>
+#include <algorithm>
 
 static void refresh(App& app)
 {

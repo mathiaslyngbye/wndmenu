@@ -1,6 +1,3 @@
-#include <vector>
-#include <string>
-
 #include "control.hpp"
 #include "index.hpp"
 #include "app.hpp"

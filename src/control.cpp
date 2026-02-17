@@ -1,21 +1,35 @@
 #include "control.hpp"
 
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-
-#include <windows.h>
-#include <shellapi.h>
-#include <shlobj.h>
+#include "index.hpp"
+#include "compare.hpp"
 
 #include <algorithm>
 #include <string>
-#include <string_view>
-#include <vector>
 #include <unordered_set>
+#include <cstdint>
+#include <cwchar>
 #include <filesystem>
 
-#include "index.hpp"
-#include "compare.hpp"
+#include <windows.h>
+#include <shlobj.h>
+
+static bool expand(wchar_t* buffer, size_t size)
+{
+    if (!buffer || size == 0 || buffer[0] == L'\0')
+        return true;
+
+    wchar_t tmp[32768]{};
+    DWORD n = ExpandEnvironmentStringsW(buffer, tmp, (DWORD)std::size(tmp));
+    if (n == 0 || n > std::size(tmp))
+        return false;
+
+    size_t need = wcslen(tmp) + 1;
+    if (need > size)
+        return false;
+
+    wcscpy_s(buffer, size, tmp);
+    return true;
+}
 
 static std::wstring stem(std::wstring_view path)
 {

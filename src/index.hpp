@@ -1,10 +1,10 @@
 #ifndef INDEX_HPP
 #define INDEX_HPP
 
-#include <vector>
-#include <string>
-
 #include "compare.hpp"
+
+#include <vector>
+#include <string_view>
 
 struct StringRef
 {

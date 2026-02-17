@@ -1,11 +1,11 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
 
+#include "target.hpp"
+
 #include <string>
 #include <array>
 #include <windows.h>
-
-#include "target.hpp"
 
 inline constexpr std::array<std::array<COLORREF, 2>, 3> colors = {{
     /* fg                       bg */

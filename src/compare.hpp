@@ -1,6 +1,8 @@
 #ifndef COMPARE_HPP
 #define COMPARE_HPP
 
+#include <string_view>
+
 static constexpr wchar_t fold(wchar_t c) noexcept
 {
     return (c >= L'A' && c <= L'Z') ? (c - L'A' + L'a') : c;
