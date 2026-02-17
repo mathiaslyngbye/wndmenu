@@ -80,7 +80,7 @@ static void add_directory(Index& index, std::unordered_set<std::wstring>& seen, 
         const auto& path = entry.path();
         std::wstring_view filename(path.filename().native());
 
-        if (!(ends_with(filename, L".lnk") || ends_with(filename, L".url") || ends_with(filename, L".appref-ms")))
+        if (!ends_with(filename, L".lnk"))
             continue;
 
         std::wstring display = stem(filename);
@@ -164,16 +164,100 @@ void launch(const Index& index, uint32_t id)
     if (id >= index.entries.size())
         return;
 
-    const Entry& e = index.entries[id];
+    const Entry& entry = index.entries[id];
+    const wchar_t* lnk_path = c_str(index, entry.path);
 
-    ShellExecuteW(
+    IShellLinkW* link = nullptr;
+    HRESULT hr = CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_IShellLinkW, (void**)&link);
+
+    if (FAILED(hr) || !link)
+        return;
+
+    IPersistFile* persist = nullptr;
+    hr = link->QueryInterface(IID_IPersistFile, (void**)&persist);
+
+    if (FAILED(hr) || !persist)
+        return;
+
+    hr = persist->Load(lnk_path, STGM_READ);
+    persist->Release();
+
+    if (FAILED(hr))
+    {
+        link->Release();
+        return;
+    }
+
+    wchar_t target[MAX_PATH]{};
+    WIN32_FIND_DATAW wfd{};
+    hr = link->GetPath(target, (int)std::size(target), &wfd, SLGP_RAWPATH);
+
+    if (FAILED(hr) || target[0] == L'\0')
+    {
+        link->Release();
+        return;
+    }
+
+    wchar_t arguments[32768]{};
+    wchar_t working_directory[MAX_PATH]{};
+    int show_command = SW_SHOWNORMAL;
+    link->GetArguments(arguments, (int)std::size(arguments));
+    link->GetWorkingDirectory(working_directory, (int)std::size(working_directory));
+    link->GetShowCmd(&show_command);
+    link->Release();
+
+    bool status = expand(target,             std::size(target)) &&
+                  expand(working_directory,  std::size(working_directory)) &&
+                  expand(arguments,          std::size(arguments));
+
+    if (!status)
+        return;
+
+    if (!ends_with(target, L".exe"))
+        return;
+
+    std::error_code ec;
+    const wchar_t* directory = working_directory;
+    bool exists = (directory && directory[0] != L'\0' && std::filesystem::is_directory(directory, ec));
+
+    if (!exists)
+        directory = nullptr;
+
+    std::wstring command;
+    command.reserve(std::wcslen(target) + std::wcslen(arguments) + 4);
+    command.append(1, L'"');
+    command.append(target);
+    command.append(1, L'"');
+
+    if (arguments[0] != L'\0')
+    {
+        command.push_back(L' ');
+        command.append(arguments);
+    }
+
+    STARTUPINFOW si{};
+    si.cb = sizeof(si);
+    si.dwFlags = STARTF_USESHOWWINDOW;
+    si.wShowWindow = (WORD)show_command;
+
+    PROCESS_INFORMATION pi{};
+    status = CreateProcessW(
+        target,
+        command.data(),
+        nullptr, nullptr,
+        FALSE,
+        0,
         nullptr,
-        L"open",
-        c_str(index, e.path),
-        nullptr,
-        nullptr,
-        SW_SHOWNORMAL
+        directory,
+        &si,
+        &pi
     );
+
+    if (status)
+    {
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
+    }
 }
 
 std::wstring_view display(const Index& index, uint32_t id)
